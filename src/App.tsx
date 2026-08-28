@@ -54,7 +54,7 @@ function App() {
 
   return (
     <main className={`min-h-screen theme-${theme}`}>
-      <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-8">
+      <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-8">
         {/* Header */}
         <header className="flex items-center justify-between border-b border-[var(--surface)] pb-5">
           <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">
@@ -248,17 +248,19 @@ function App() {
                 ))}
               </div>
 
-              {/* Timer */}
-              <div className="mb-10 text-2xl font-medium text-[var(--muted)]">
-                {timeLeft}
-              </div>
-
-              {/* Typing area */}
               <div
                 onClick={focusTypingInput}
-                className="relative cursor-text outline-none"
+                  className="mx-auto w-full max-w-6xl cursor-text outline-none"
               >
-                <TypingText text={passage} characters={characters} />
+                {/* Timer */}
+                <div className="mb-6 text-left text-2xl font-medium text-[var(--muted)]">
+                  {timeLeft}
+                </div>
+
+                {/* Stable typing area */}
+                <div className="h-[10rem] overflow-hidden">
+                  <TypingText text={passage} characters={characters} />
+                </div>
 
                 <input
                   ref={inputRef}
