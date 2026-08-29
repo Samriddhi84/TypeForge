@@ -2,8 +2,14 @@ import { useEffect, useState } from 'react'
 
 type CharacterStatus = 'correct' | 'incorrect' | 'untyped'
 type TestStatus = 'not_started' | 'running' | 'finished'
+type TestMode = 'time' | 'words' | 'sentences'
 
-function useTypingTest(text: string, duration: number) {
+function useTypingTest(
+  text: string,
+  duration: number,
+  testMode: TestMode,
+  wordCount: number,
+) {
   const [userInput, setUserInput] = useState('')
   const [timeLeft, setTimeLeft] = useState(duration)
   const [status, setStatus] = useState<TestStatus>('not_started')
@@ -11,15 +17,17 @@ function useTypingTest(text: string, duration: number) {
 
   const [startTime, setStartTime] = useState<number | null>(null)
 
-  const characters: CharacterStatus[] = text.split('').map((character, index) => {
-    const typedCharacter = userInput[index]
+  const characters: CharacterStatus[] = text
+    .split('')
+    .map((character, index) => {
+      const typedCharacter = userInput[index]
 
-    if (typedCharacter === undefined) {
-      return 'untyped'
-    }
+      if (typedCharacter === undefined) {
+        return 'untyped'
+      }
 
-    return typedCharacter === character ? 'correct' : 'incorrect'
-  })
+      return typedCharacter === character ? 'correct' : 'incorrect'
+    })
 
   const correctCharacters = characters.filter(
     (character) => character === 'correct',
@@ -48,9 +56,9 @@ function useTypingTest(text: string, duration: number) {
       ? correctCharacters / 5 / elapsedMinutes
       : 0
 
-  // Countdown timer
+  // Timer — only used for Time mode
   useEffect(() => {
-    if (status !== 'running') {
+    if (status !== 'running' || testMode !== 'time') {
       return
     }
 
@@ -73,23 +81,26 @@ function useTypingTest(text: string, duration: number) {
     return () => {
       clearInterval(timer)
     }
-  }, [status, startTime, duration])
+  }, [status, startTime, duration, testMode])
 
-  // Reset when duration changes
+  // Reset when test configuration changes
   useEffect(() => {
     setUserInput('')
     setTimeLeft(duration)
     setElapsedTime(0)
     setStartTime(null)
     setStatus('not_started')
-  }, [duration])
+  }, [duration, testMode, wordCount, text])
 
   const finishTest = () => {
     if (startTime !== null) {
       const elapsed = (Date.now() - startTime) / 1000
 
-      setElapsedTime(Math.min(elapsed, duration))
-      setTimeLeft(Math.max(Math.ceil(duration - elapsed), 0))
+      setElapsedTime(elapsed)
+
+      if (testMode === 'time') {
+        setTimeLeft(Math.max(Math.ceil(duration - elapsed), 0))
+      }
     }
 
     setStatus('finished')
@@ -113,7 +124,21 @@ function useTypingTest(text: string, duration: number) {
 
     setUserInput(value)
 
-    if (value === text) {
+    // Time mode finishes when the timer reaches zero.
+    // It can also finish early if the passage is completed.
+    if (testMode === 'time' && value === text) {
+      finishTest()
+      return
+    }
+
+    // Words mode finishes when the selected word passage is completed.
+    if (testMode === 'words' && value === text) {
+      finishTest()
+      return
+    }
+
+    // Sentences mode finishes when the sentence/passage is completed.
+    if (testMode === 'sentences' && value === text) {
       finishTest()
     }
   }
@@ -125,6 +150,13 @@ function useTypingTest(text: string, duration: number) {
     setStartTime(null)
     setStatus('not_started')
   }
+
+  const wordsTyped =
+    userInput.trim() === ''
+      ? 0
+      : userInput.trim().split(/\s+/).length
+
+  const wordsRemaining = Math.max(wordCount - wordsTyped, 0)
 
   return {
     userInput,
@@ -138,6 +170,8 @@ function useTypingTest(text: string, duration: number) {
     accuracy,
     rawWpm,
     netWpm,
+    wordsTyped,
+    wordsRemaining,
     handleInput,
     restartTest,
   }

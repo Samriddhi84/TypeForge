@@ -6,7 +6,7 @@ import { generateText } from "./utils/generateText";
 import Results from "./components/Results";
 
 type Theme = "midnight" | "daylight" | "sakura";
-type TestMode = "sentences" | "words";
+type TestMode = "time" | "words" | "sentences";
 
 const themes: { id: Theme; name: string; icon: string }[] = [
   { id: "midnight", name: "Midnight", icon: "🌑" },
@@ -18,7 +18,8 @@ function App() {
   const [theme, setTheme] = useState<Theme>("midnight");
   const [themeOpen, setThemeOpen] = useState(false);
   const [duration, setDuration] = useState(60);
-  const [testMode, setTestMode] = useState<TestMode>("sentences");
+  const [testMode, setTestMode] = useState<TestMode>("time");
+  const [wordCount, setWordCount] = useState(100);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -26,13 +27,14 @@ function App() {
     () => passages[Math.floor(Math.random() * passages.length)],
   );
 
-  const generatePassage = (mode: TestMode) => {
+  const generatePassage = (mode: TestMode, count = wordCount) => {
     if (mode === "sentences") {
       return passages[Math.floor(Math.random() * passages.length)];
     }
 
-    return generateText(100);
+    return generateText(count);
   };
+
   const {
     userInput,
     characters,
@@ -40,21 +42,41 @@ function App() {
     status,
     elapsedTime,
     accuracy,
-    rawWpm,
     netWpm,
     correctCharacters,
     incorrectCharacters,
     handleInput,
     restartTest,
-  } = useTypingTest(passage, duration);
+    wordsRemaining,
+  } = useTypingTest(passage, duration, testMode, wordCount);
 
   const focusTypingInput = () => {
     inputRef.current?.focus();
   };
 
+  const handleModeChange = (mode: TestMode) => {
+    setTestMode(mode);
+    setPassage(generatePassage(mode));
+    restartTest();
+
+    setTimeout(() => {
+      focusTypingInput();
+    }, 0);
+  };
+
+  const handleRestart = () => {
+    setPassage(generatePassage(testMode));
+    restartTest();
+
+    setTimeout(() => {
+      focusTypingInput();
+    }, 0);
+  };
+
   return (
     <main className={`min-h-screen theme-${theme}`}>
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-8">
+
         {/* Header */}
         <header className="flex items-center justify-between border-b border-[var(--surface)] pb-5">
           <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">
@@ -125,141 +147,129 @@ function App() {
 
         {/* Content */}
         <section className="flex flex-1 flex-col items-center justify-center">
+
           {status === "finished" ? (
             /* Results */
-            <div className="w-full max-w-2xl text-center">
-              <p className="mb-3 text-sm text-[var(--muted)]">Test complete</p>
-
-              <div className="mb-12">
-                <div className="text-7xl font-semibold tracking-tight text-[var(--accent)]">
-                  {Math.round(netWpm)}
-                </div>
-
-                <div className="mt-2 text-lg text-[var(--muted)]">WPM</div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="rounded-xl bg-[var(--surface)] p-5">
-                  <div className="text-2xl font-semibold text-[var(--text)]">
-                    {accuracy.toFixed(1)}%
-                  </div>
-
-                  <div className="mt-1 text-sm text-[var(--muted)]">
-                    Accuracy
-                  </div>
-                </div>
-
-                <div className="rounded-xl bg-[var(--surface)] p-5">
-                  <div className="text-2xl font-semibold text-[var(--text)]">
-                    {correctCharacters}
-                  </div>
-
-                  <div className="mt-1 text-sm text-[var(--muted)]">
-                    Correct
-                  </div>
-                </div>
-
-                <div className="rounded-xl bg-[var(--surface)] p-5">
-                  <div className="text-2xl font-semibold text-[var(--text)]">
-                    {incorrectCharacters}
-                  </div>
-
-                  <div className="mt-1 text-sm text-[var(--muted)]">Errors</div>
-                </div>
-              </div>
-
-              <div className="mt-6 text-sm text-[var(--muted)]">
-                Time: {elapsedTime.toFixed(1)}s
-              </div>
-
-              <button
-                onClick={() => {
-                  setPassage(generatePassage(testMode));
-                  restartTest();
-
-                  setTimeout(() => {
-                    focusTypingInput();
-                  }, 0);
-                }}
-                className="
-                  mt-10
-                  rounded-lg
-                  bg-[var(--surface)]
-                  px-5 py-3
-                  text-sm
-                  text-[var(--text)]
-                  transition
-                  hover:bg-[var(--surface-hover)]
-                "
-              >
-                ↻ Try Again
-              </button>
-            </div>
+            <Results
+              wpm={netWpm}
+              accuracy={accuracy}
+              correctCharacters={correctCharacters}
+              incorrectCharacters={incorrectCharacters}
+              onRestart={handleRestart}
+            />
           ) : (
             /* Typing Test */
-            <>
+            <div className="w-full">
+
               {/* Test mode */}
-              <div className="mb-6 flex gap-2">
-                {(["sentences", "words"] as TestMode[]).map((mode) => (
+              <div className="mb-5 flex justify-center gap-2">
+                {(["time", "words", "sentences"] as TestMode[]).map((mode) => (
                   <button
                     key={mode}
-                    onClick={() => {
-                      setTestMode(mode);
-                      setPassage(generatePassage(mode));
-                      restartTest();
-                    }}
-                    className={`
-        rounded-lg
-        px-4 py-2
-        text-sm
-        transition
-        ${
-          testMode === mode
-            ? "bg-[var(--accent)] text-[var(--bg)]"
-            : "text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]"
-        }
-      `}
-                  >
-                    {mode === "sentences" ? "Sentences" : "Words"}
-                  </button>
-                ))}
-              </div>
-
-              {/* Duration options */}
-              <div className="mb-8 flex gap-2">
-                {[15, 30, 60, 120].map((option) => (
-                  <button
-                    key={option}
-                    onClick={() => setDuration(option)}
+                    onClick={() => handleModeChange(mode)}
                     className={`
                       rounded-lg
                       px-4 py-2
                       text-sm
                       transition
                       ${
-                        duration === option
+                        testMode === mode
                           ? "bg-[var(--accent)] text-[var(--bg)]"
                           : "text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]"
                       }
                     `}
                   >
-                    {option}s
+                    {mode === "time"
+                      ? "Time"
+                      : mode === "words"
+                        ? "Words"
+                        : "Sentences"}
                   </button>
                 ))}
               </div>
 
+              {/* Mode options */}
+              <div className="mb-8 flex min-h-10 justify-center gap-2">
+
+                {/* Time options */}
+                {testMode === "time" &&
+                  [15, 30, 60, 120].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setDuration(option);
+                        restartTest();
+
+                        setTimeout(() => {
+                          focusTypingInput();
+                        }, 0);
+                      }}
+                      className={`
+                        rounded-lg
+                        px-4 py-2
+                        text-sm
+                        transition
+                        ${
+                          duration === option
+                            ? "bg-[var(--accent)] text-[var(--bg)]"
+                            : "text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]"
+                        }
+                      `}
+                    >
+                      {option}s
+                    </button>
+                  ))}
+
+                {/* Word options */}
+                {testMode === "words" &&
+                  [25, 50, 100, 200].map((count) => (
+                    <button
+                      key={count}
+                      onClick={() => {
+                        setWordCount(count);
+                        setPassage(generatePassage("words", count));
+                        restartTest();
+
+                        setTimeout(() => {
+                          focusTypingInput();
+                        }, 0);
+                      }}
+                      className={`
+                        rounded-lg
+                        px-4 py-2
+                        text-sm
+                        transition
+                        ${
+                          wordCount === count
+                            ? "bg-[var(--accent)] text-[var(--bg)]"
+                            : "text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]"
+                        }
+                      `}
+                    >
+                      {count}
+                    </button>
+                  ))}
+              </div>
+
+              {/* Typing area */}
               <div
                 onClick={focusTypingInput}
-                  className="mx-auto w-full max-w-6xl cursor-text outline-none"
+                className="mx-auto w-full max-w-6xl cursor-text outline-none"
               >
-                {/* Timer */}
-                <div className="mb-6 text-left text-2xl font-medium text-[var(--muted)]">
-                  {timeLeft}
-                </div>
+
+                {/* Time / Word counter */}
+                {testMode !== "sentences" && (
+                  <div className="mb-6 text-left text-2xl font-medium text-[var(--muted)]">
+                    {testMode === "time" ? timeLeft : wordsRemaining}
+                  </div>
+                )}
 
                 {/* Stable typing area */}
                 <div className="h-[10rem] overflow-hidden">
-                  <TypingText text={passage} characters={characters} />
+                  <TypingText
+                    text={passage}
+                    characters={characters}
+                  />
                 </div>
 
                 <input
@@ -273,29 +283,25 @@ function App() {
               </div>
 
               {/* Restart */}
-              <button
-                onClick={() => {
-                  setPassage(generatePassage(testMode));
-                  restartTest();
+              <div className="flex justify-center">
+                <button
+                  onClick={handleRestart}
+                  className="
+                    mt-12
+                    rounded-lg
+                    px-4 py-2
+                    text-sm
+                    text-[var(--muted)]
+                    transition
+                    hover:bg-[var(--surface)]
+                    hover:text-[var(--text)]
+                  "
+                >
+                  ↻ Restart
+                </button>
+              </div>
 
-                  setTimeout(() => {
-                    focusTypingInput();
-                  }, 0);
-                }}
-                className="
-                  mt-12
-                  rounded-lg
-                  px-4 py-2
-                  text-sm
-                  text-[var(--muted)]
-                  transition
-                  hover:bg-[var(--surface)]
-                  hover:text-[var(--text)]
-                "
-              >
-                ↻ Restart
-              </button>
-            </>
+            </div>
           )}
         </section>
       </div>
