@@ -254,7 +254,7 @@ function App() {
               {/* Typing area */}
               <div
                 onClick={focusTypingInput}
-                className="mx-auto w-full max-w-6xl cursor-text outline-none"
+                className="mx-auto w-full max-w-5xl cursor-text outline-none"
               >
 
                 {/* Time / Word counter */}
