@@ -17,6 +17,10 @@ function useTypingTest(
 
   const [startTime, setStartTime] = useState<number | null>(null)
 
+  // Tracks mistakes made during the test, even if the user
+  // later backspaces and corrects them.
+  const [errorCount, setErrorCount] = useState(0)
+
   const characters: CharacterStatus[] = text
     .split('')
     .map((character, index) => {
@@ -90,6 +94,7 @@ function useTypingTest(
     setElapsedTime(0)
     setStartTime(null)
     setStatus('not_started')
+    setErrorCount(0)
   }, [duration, testMode, wordCount, text])
 
   const finishTest = () => {
@@ -122,6 +127,17 @@ function useTypingTest(
       setStatus('running')
     }
 
+    // Only check newly typed characters.
+    // Backspacing does not remove previously recorded mistakes.
+    if (value.length > userInput.length) {
+      const typedCharacter = value[value.length - 1]
+      const expectedCharacter = text[value.length - 1]
+
+      if (typedCharacter !== expectedCharacter) {
+        setErrorCount((count) => count + 1)
+      }
+    }
+
     setUserInput(value)
 
     // Time mode finishes when the timer reaches zero.
@@ -149,6 +165,7 @@ function useTypingTest(
     setElapsedTime(0)
     setStartTime(null)
     setStatus('not_started')
+    setErrorCount(0)
   }
 
   const wordsTyped =
@@ -164,6 +181,7 @@ function useTypingTest(
     timeLeft,
     status,
     elapsedTime,
+    errorCount,
     correctCharacters,
     incorrectCharacters,
     totalTypedCharacters,

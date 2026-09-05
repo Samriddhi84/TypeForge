@@ -1,21 +1,22 @@
 type ResultsProps = {
   wpm: number;
   accuracy: number;
+  rawWpm: number;
   correctCharacters: number;
-  incorrectCharacters: number;
+  errorCount: number;
   onRestart: () => void;
 };
 
 function Results({
   wpm,
   accuracy,
+  rawWpm,
   correctCharacters,
-  incorrectCharacters,
+  errorCount,
   onRestart,
 }: ResultsProps) {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col">
-
       <div className="mb-12">
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--muted)]">
           Test Complete
@@ -42,6 +43,16 @@ function Results({
             Accuracy
           </div>
         </div>
+
+        <div>
+          <div className="text-6xl font-semibold tracking-tight text-[var(--text)]">
+            {rawWpm.toFixed(0)}
+          </div>
+
+          <div className="mt-2 text-sm text-[var(--muted)]">
+            Raw WPM
+          </div>
+        </div>
       </div>
 
       <div className="mb-12 flex gap-8 text-sm">
@@ -56,10 +67,10 @@ function Results({
 
         <div>
           <span className="text-[var(--error)]">
-            {incorrectCharacters}
+            {errorCount}
           </span>{" "}
           <span className="text-[var(--muted)]">
-            incorrect
+            errors
           </span>
         </div>
       </div>

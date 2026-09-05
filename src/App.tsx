@@ -48,8 +48,9 @@ function App() {
     status,
     accuracy,
     netWpm,
+    rawWpm,
     correctCharacters,
-    incorrectCharacters,
+    errorCount,
     handleInput,
     restartTest,
     wordsRemaining,
@@ -175,8 +176,9 @@ function App() {
             <Results
               wpm={netWpm}
               accuracy={accuracy}
+              rawWpm={rawWpm}
               correctCharacters={correctCharacters}
-              incorrectCharacters={incorrectCharacters}
+              errorCount={errorCount}
               onRestart={handleRestart}
             />
           ) : (
