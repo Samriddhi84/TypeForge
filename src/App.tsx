@@ -50,12 +50,13 @@ function App() {
     netWpm,
     rawWpm,
     correctCharacters,
+    totalTypedCharacters,
+    elapsedTime,
     errorCount,
     handleInput,
     restartTest,
     wordsRemaining,
   } = useTypingTest(passage, duration, testMode, wordCount);
-
   const focusTypingInput = () => {
     inputRef.current?.focus();
   };
@@ -177,7 +178,8 @@ function App() {
               wpm={netWpm}
               accuracy={accuracy}
               rawWpm={rawWpm}
-              correctCharacters={correctCharacters}
+              totalTypedCharacters={totalTypedCharacters}
+              elapsedTime={elapsedTime}
               errorCount={errorCount}
               onRestart={handleRestart}
             />

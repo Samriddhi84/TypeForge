@@ -4,6 +4,11 @@ type CharacterStatus = 'correct' | 'incorrect' | 'untyped'
 type TestStatus = 'not_started' | 'running' | 'finished'
 type TestMode = 'time' | 'words' | 'sentences'
 
+type WpmPoint = {
+  time: number
+  wpm: number
+}
+
 function useTypingTest(
   text: string,
   duration: number,
@@ -17,9 +22,11 @@ function useTypingTest(
 
   const [startTime, setStartTime] = useState<number | null>(null)
 
-  // Tracks every mistake made during the test,
-  // including mistakes that are later corrected.
+  // Tracks every mistake made during the test.
   const [errorCount, setErrorCount] = useState(0)
+
+  // Stores WPM performance throughout the test.
+  const [wpmHistory, setWpmHistory] = useState<WpmPoint[]>([])
 
   const characters: CharacterStatus[] = text
     .split('')
@@ -43,12 +50,6 @@ function useTypingTest(
 
   const totalTypedCharacters = userInput.length
 
-  /*
-   * Accuracy
-   *
-   * Uses historical errors so that mistakes remain part
-   * of the final performance even if they are corrected.
-   */
   const accurateCharacters = Math.max(
     totalTypedCharacters - errorCount,
     0,
@@ -61,22 +62,11 @@ function useTypingTest(
 
   const elapsedMinutes = elapsedTime / 60
 
-  /*
-   * Raw WPM
-   *
-   * Measures pure typing speed without penalizing mistakes.
-   */
   const rawWpm =
     elapsedMinutes > 0
       ? totalTypedCharacters / 5 / elapsedMinutes
       : 0
 
-  /*
-   * Net WPM
-   *
-   * Measures effective typing speed after accounting
-   * for every mistake made during the test.
-   */
   const netWpm =
     elapsedMinutes > 0
       ? accurateCharacters / 5 / elapsedMinutes
@@ -99,6 +89,32 @@ function useTypingTest(
       setElapsedTime(elapsed)
       setTimeLeft(Math.ceil(remaining))
 
+      // Record WPM once per second.
+      const currentElapsedSecond = Math.floor(elapsed)
+
+      if (currentElapsedSecond > 0) {
+        const currentWpm =
+          elapsed > 0
+            ? accurateCharacters / 5 / (elapsed / 60)
+            : 0
+
+        setWpmHistory((history) => {
+          const lastPoint = history[history.length - 1]
+
+          if (lastPoint?.time === currentElapsedSecond) {
+            return history
+          }
+
+          return [
+            ...history,
+            {
+              time: currentElapsedSecond,
+              wpm: currentWpm,
+            },
+          ]
+        })
+      }
+
       if (remaining <= 0) {
         setStatus('finished')
       }
@@ -107,7 +123,13 @@ function useTypingTest(
     return () => {
       clearInterval(timer)
     }
-  }, [status, startTime, duration, testMode])
+  }, [
+    status,
+    startTime,
+    duration,
+    testMode,
+    accurateCharacters,
+  ])
 
   // Reset when test configuration changes
   useEffect(() => {
@@ -117,6 +139,7 @@ function useTypingTest(
     setStartTime(null)
     setStatus('not_started')
     setErrorCount(0)
+    setWpmHistory([])
   }, [duration, testMode, wordCount, text])
 
   const finishTest = () => {
@@ -127,6 +150,36 @@ function useTypingTest(
 
       if (testMode === 'time') {
         setTimeLeft(Math.max(Math.ceil(duration - elapsed), 0))
+      }
+
+      // Capture the final WPM point.
+      if (elapsed > 0) {
+        const finalWpm =
+          accurateCharacters / 5 / (elapsed / 60)
+
+        setWpmHistory((history) => {
+          const finalTime = Math.max(1, Math.ceil(elapsed))
+
+          const existingPoint = history.find(
+            (point) => point.time === finalTime,
+          )
+
+          if (existingPoint) {
+            return history.map((point) =>
+              point.time === finalTime
+                ? { time: finalTime, wpm: finalWpm }
+                : point,
+            )
+          }
+
+          return [
+            ...history,
+            {
+              time: finalTime,
+              wpm: finalWpm,
+            },
+          ]
+        })
       }
     }
 
@@ -149,11 +202,8 @@ function useTypingTest(
       setStatus('running')
     }
 
-    /*
-     * Only inspect newly typed characters.
-     *
-     * Backspace does not remove a previously recorded error.
-     */
+    // Only inspect newly typed characters.
+    // Backspacing does not remove previously recorded errors.
     if (value.length > userInput.length) {
       const typedCharacter = value[value.length - 1]
       const expectedCharacter = text[value.length - 1]
@@ -190,6 +240,7 @@ function useTypingTest(
     setStartTime(null)
     setStatus('not_started')
     setErrorCount(0)
+    setWpmHistory([])
   }
 
   const wordsTyped =
@@ -206,20 +257,20 @@ function useTypingTest(
     status,
     elapsedTime,
 
-    // Metrics
     correctCharacters,
     incorrectCharacters,
     totalTypedCharacters,
     errorCount,
+
     accuracy,
     rawWpm,
     netWpm,
 
-    // Word metrics
     wordsTyped,
     wordsRemaining,
 
-    // Controls
+    wpmHistory,
+
     handleInput,
     restartTest,
   }
