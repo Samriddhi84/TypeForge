@@ -49,14 +49,15 @@ function App() {
     accuracy,
     netWpm,
     rawWpm,
-    correctCharacters,
     totalTypedCharacters,
     elapsedTime,
     errorCount,
+    wpmHistory,
     handleInput,
     restartTest,
     wordsRemaining,
   } = useTypingTest(passage, duration, testMode, wordCount);
+
   const focusTypingInput = () => {
     inputRef.current?.focus();
   };
@@ -88,11 +89,11 @@ function App() {
           <button
             onClick={handleRestart}
             className="
-    typeforge-logo
-    text-[var(--text)]
-    transition
-    hover:text-[var(--accent)]
-  "
+              typeforge-logo
+              text-[var(--text)]
+              transition
+              hover:text-[var(--accent)]
+            "
           >
             TypeForge
           </button>
@@ -181,6 +182,7 @@ function App() {
               totalTypedCharacters={totalTypedCharacters}
               elapsedTime={elapsedTime}
               errorCount={errorCount}
+              wpmHistory={wpmHistory}
               onRestart={handleRestart}
             />
           ) : (
