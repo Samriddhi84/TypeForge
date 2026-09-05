@@ -1,10 +1,10 @@
 type ResultsProps = {
-  wpm: number
-  accuracy: number
-  correctCharacters: number
-  incorrectCharacters: number
-  onRestart: () => void
-}
+  wpm: number;
+  accuracy: number;
+  correctCharacters: number;
+  incorrectCharacters: number;
+  onRestart: () => void;
+};
 
 function Results({
   wpm,
@@ -14,14 +14,17 @@ function Results({
   onRestart,
 }: ResultsProps) {
   return (
-    <div className="flex flex-col items-center text-center">
-      <p className="mb-8 text-sm font-medium uppercase tracking-widest text-[var(--muted)]">
-        Test Complete
-      </p>
+    <div className="mx-auto flex w-full max-w-5xl flex-col">
 
-      <div className="mb-10 flex items-end gap-12">
+      <div className="mb-12">
+        <p className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--muted)]">
+          Test Complete
+        </p>
+      </div>
+
+      <div className="mb-12 flex items-end gap-16">
         <div>
-          <div className="text-5xl font-semibold tracking-tight text-[var(--accent)]">
+          <div className="text-6xl font-semibold tracking-tight text-[var(--accent)]">
             {wpm.toFixed(0)}
           </div>
 
@@ -31,7 +34,7 @@ function Results({
         </div>
 
         <div>
-          <div className="text-5xl font-semibold tracking-tight text-[var(--text)]">
+          <div className="text-6xl font-semibold tracking-tight text-[var(--text)]">
             {accuracy.toFixed(1)}%
           </div>
 
@@ -41,11 +44,11 @@ function Results({
         </div>
       </div>
 
-      <div className="mb-10 flex gap-8 text-sm">
+      <div className="mb-12 flex gap-8 text-sm">
         <div>
           <span className="text-[var(--text)]">
             {correctCharacters}
-          </span>{' '}
+          </span>{" "}
           <span className="text-[var(--muted)]">
             correct
           </span>
@@ -54,7 +57,7 @@ function Results({
         <div>
           <span className="text-[var(--error)]">
             {incorrectCharacters}
-          </span>{' '}
+          </span>{" "}
           <span className="text-[var(--muted)]">
             incorrect
           </span>
@@ -64,19 +67,21 @@ function Results({
       <button
         onClick={onRestart}
         className="
-          rounded-lg
-          bg-[var(--surface)]
-          px-5 py-2.5
+          w-fit
+          rounded-md
+          px-4
+          py-2
           text-sm
-          text-[var(--text)]
+          text-[var(--muted)]
           transition
-          hover:bg-[var(--surface-hover)]
+          hover:bg-[var(--surface)]
+          hover:text-[var(--text)]
         "
       >
         ↻ Try Again
       </button>
     </div>
-  )
+  );
 }
 
-export default Results
+export default Results;

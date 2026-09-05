@@ -36,7 +36,8 @@ function TypingText({ text, characters }: TypingTextProps) {
     const visibleBottom = visibleTop + container.clientHeight;
 
     if (characterBottom > visibleBottom) {
-      container.scrollTop = characterTop - container.clientHeight / 2;
+      container.scrollTop =
+        characterTop - container.clientHeight / 2;
     }
 
     if (characterTop < visibleTop) {

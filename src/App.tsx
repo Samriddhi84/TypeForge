@@ -14,6 +14,12 @@ const themes: { id: Theme; name: string; icon: string }[] = [
   { id: "sakura", name: "Sakura", icon: "🌸" },
 ];
 
+const modes: { id: TestMode; label: string }[] = [
+  { id: "time", label: "Time" },
+  { id: "words", label: "Words" },
+  { id: "sentences", label: "Sentences" },
+];
+
 function App() {
   const [theme, setTheme] = useState<Theme>("midnight");
   const [themeOpen, setThemeOpen] = useState(false);
@@ -40,7 +46,6 @@ function App() {
     characters,
     timeLeft,
     status,
-    elapsedTime,
     accuracy,
     netWpm,
     correctCharacters,
@@ -75,29 +80,43 @@ function App() {
 
   return (
     <main className={`min-h-screen theme-${theme}`}>
-      <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-8">
-
-        {/* Header */}
-        <header className="flex items-center justify-between border-b border-[var(--surface)] pb-5">
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">
+      <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-6">
+        {/* Navbar */}
+        <header className="flex h-20 items-center justify-between">
+          <button
+            onClick={handleRestart}
+            className="
+    typeforge-logo
+    text-[var(--text)]
+    transition
+    hover:text-[var(--accent)]
+  "
+          >
             TypeForge
-          </h1>
+          </button>
 
-          {/* Theme selector */}
           <div className="relative">
             <button
-              onClick={() => setThemeOpen(!themeOpen)}
+              onClick={() => setThemeOpen((open) => !open)}
               className="
-                rounded-lg
-                bg-[var(--surface)]
-                px-3 py-2
+                flex
+                items-center
+                gap-2
+                rounded-md
+                px-3
+                py-2
                 text-sm
-                text-[var(--text)]
+                text-[var(--muted)]
                 transition
-                hover:bg-[var(--surface-hover)]
+                hover:bg-[var(--surface)]
+                hover:text-[var(--text)]
               "
             >
-              Theme
+              <span>{themes.find((item) => item.id === theme)?.icon}</span>
+
+              <span>{themes.find((item) => item.id === theme)?.name}</span>
+
+              <span className="text-xs">⌄</span>
             </button>
 
             {themeOpen && (
@@ -105,15 +124,16 @@ function App() {
                 className="
                   absolute
                   right-0
-                  z-10
+                  top-full
+                  z-20
                   mt-2
                   w-44
-                  rounded-xl
+                  rounded-lg
                   border
                   border-[var(--surface-hover)]
                   bg-[var(--surface)]
-                  p-2
-                  shadow-lg
+                  p-1.5
+                  shadow-xl
                 "
               >
                 {themes.map((themeOption) => (
@@ -123,18 +143,22 @@ function App() {
                       setTheme(themeOption.id);
                       setThemeOpen(false);
                     }}
-                    className="
+                    className={`
                       flex
                       w-full
                       items-center
                       gap-2
-                      rounded-lg
-                      px-3 py-2
+                      rounded-md
+                      px-3
+                      py-2
                       text-sm
-                      text-[var(--text)]
                       transition
-                      hover:bg-[var(--surface-hover)]
-                    "
+                      ${
+                        theme === themeOption.id
+                          ? "bg-[var(--surface-hover)] text-[var(--text)]"
+                          : "text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
+                      }
+                    `}
                   >
                     <span>{themeOption.icon}</span>
                     <span>{themeOption.name}</span>
@@ -145,11 +169,9 @@ function App() {
           </div>
         </header>
 
-        {/* Content */}
-        <section className="flex flex-1 flex-col items-center justify-center">
-
+        {/* Main test area */}
+        <section className="flex flex-1 flex-col justify-center pb-16">
           {status === "finished" ? (
-            /* Results */
             <Results
               wpm={netWpm}
               accuracy={accuracy}
@@ -158,119 +180,135 @@ function App() {
               onRestart={handleRestart}
             />
           ) : (
-            /* Typing Test */
             <div className="w-full">
-
-              {/* Test mode */}
-              <div className="mb-5 flex justify-center gap-2">
-                {(["time", "words", "sentences"] as TestMode[]).map((mode) => (
+              {/* Mode navigation */}
+              <div className="mx-auto mb-2 flex w-full max-w-5xl items-center gap-6">
+                {modes.map((mode) => (
                   <button
-                    key={mode}
-                    onClick={() => handleModeChange(mode)}
+                    key={mode.id}
+                    onClick={() => handleModeChange(mode.id)}
                     className={`
-                      rounded-lg
-                      px-4 py-2
+                      relative
+                      py-2
                       text-sm
+                      font-medium
                       transition
                       ${
-                        testMode === mode
-                          ? "bg-[var(--accent)] text-[var(--bg)]"
-                          : "text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]"
+                        testMode === mode.id
+                          ? "text-[var(--text)]"
+                          : "text-[var(--muted)] hover:text-[var(--text)]"
                       }
                     `}
                   >
-                    {mode === "time"
-                      ? "Time"
-                      : mode === "words"
-                        ? "Words"
-                        : "Sentences"}
+                    {mode.label}
+
+                    {testMode === mode.id && (
+                      <span
+                        className="
+                          absolute
+                          bottom-0
+                          left-0
+                          h-px
+                          w-full
+                          bg-[var(--accent)]
+                        "
+                      />
+                    )}
                   </button>
                 ))}
               </div>
 
-              {/* Mode options */}
-              <div className="mb-8 flex min-h-10 justify-center gap-2">
-
+              {/* Reserved controls area */}
+              <div className="mx-auto flex h-14 w-full max-w-5xl items-start">
                 {/* Time options */}
-                {testMode === "time" &&
-                  [15, 30, 60, 120].map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => {
-                        setDuration(option);
-                        restartTest();
+                {testMode === "time" && (
+                  <div className="flex items-center gap-5">
+                    {[15, 30, 60, 120].map((option) => (
+                      <button
+                        key={option}
+                        onClick={() => {
+                          setDuration(option);
+                          restartTest();
 
-                        setTimeout(() => {
-                          focusTypingInput();
-                        }, 0);
-                      }}
-                      className={`
-                        rounded-lg
-                        px-4 py-2
-                        text-sm
-                        transition
-                        ${
-                          duration === option
-                            ? "bg-[var(--accent)] text-[var(--bg)]"
-                            : "text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]"
-                        }
-                      `}
-                    >
-                      {option}s
-                    </button>
-                  ))}
-
-                {/* Word options */}
-                {testMode === "words" &&
-                  [25, 50, 100, 200].map((count) => (
-                    <button
-                      key={count}
-                      onClick={() => {
-                        setWordCount(count);
-                        setPassage(generatePassage("words", count));
-                        restartTest();
-
-                        setTimeout(() => {
-                          focusTypingInput();
-                        }, 0);
-                      }}
-                      className={`
-                        rounded-lg
-                        px-4 py-2
-                        text-sm
-                        transition
-                        ${
-                          wordCount === count
-                            ? "bg-[var(--accent)] text-[var(--bg)]"
-                            : "text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]"
-                        }
-                      `}
-                    >
-                      {count}
-                    </button>
-                  ))}
-              </div>
-
-              {/* Typing area */}
-              <div
-                onClick={focusTypingInput}
-                className="mx-auto w-full max-w-5xl cursor-text outline-none"
-              >
-
-                {/* Time / Word counter */}
-                {testMode !== "sentences" && (
-                  <div className="mb-6 text-left text-2xl font-medium text-[var(--muted)]">
-                    {testMode === "time" ? timeLeft : wordsRemaining}
+                          setTimeout(() => {
+                            focusTypingInput();
+                          }, 0);
+                        }}
+                        className={`
+                          text-sm
+                          transition
+                          ${
+                            duration === option
+                              ? "text-[var(--accent)]"
+                              : "text-[var(--muted)] hover:text-[var(--text)]"
+                          }
+                        `}
+                      >
+                        {option}
+                      </button>
+                    ))}
                   </div>
                 )}
 
-                {/* Stable typing area */}
-                <div className="h-[10rem] overflow-hidden">
-                  <TypingText
-                    text={passage}
-                    characters={characters}
-                  />
+                {/* Word options */}
+                {testMode === "words" && (
+                  <div className="flex items-center gap-5">
+                    {[25, 50, 100, 200].map((count) => (
+                      <button
+                        key={count}
+                        onClick={() => {
+                          setWordCount(count);
+                          setPassage(generatePassage("words", count));
+                          restartTest();
+
+                          setTimeout(() => {
+                            focusTypingInput();
+                          }, 0);
+                        }}
+                        className={`
+                          text-sm
+                          transition
+                          ${
+                            wordCount === count
+                              ? "text-[var(--accent)]"
+                              : "text-[var(--muted)] hover:text-[var(--text)]"
+                          }
+                        `}
+                      >
+                        {count}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Stable typing layout */}
+              <div
+                onClick={focusTypingInput}
+                className="
+                  mx-auto
+                  w-full
+                  max-w-5xl
+                  cursor-text
+                "
+              >
+                {/* Timer / word counter slot */}
+                <div className="mb-3 h-8">
+                  {testMode === "time" && (
+                    <div className="text-left text-2xl font-medium tracking-tight text-[var(--muted)]">
+                      {timeLeft}
+                    </div>
+                  )}
+
+                  {testMode === "words" && (
+                    <div className="text-left text-2xl font-medium tracking-tight text-[var(--muted)]">
+                      {wordsRemaining}
+                    </div>
+                  )}
                 </div>
+
+                {/* Typing text */}
+                <TypingText text={passage} characters={characters} />
 
                 <input
                   ref={inputRef}
@@ -287,9 +325,10 @@ function App() {
                 <button
                   onClick={handleRestart}
                   className="
-                    mt-12
-                    rounded-lg
-                    px-4 py-2
+                    mt-10
+                    rounded-md
+                    px-4
+                    py-2
                     text-sm
                     text-[var(--muted)]
                     transition
@@ -300,7 +339,6 @@ function App() {
                   ↻ Restart
                 </button>
               </div>
-
             </div>
           )}
         </section>
