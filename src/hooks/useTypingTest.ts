@@ -17,8 +17,8 @@ function useTypingTest(
 
   const [startTime, setStartTime] = useState<number | null>(null)
 
-  // Tracks mistakes made during the test, even if the user
-  // later backspaces and corrects them.
+  // Tracks every mistake made during the test,
+  // including mistakes that are later corrected.
   const [errorCount, setErrorCount] = useState(0)
 
   const characters: CharacterStatus[] = text
@@ -43,21 +43,43 @@ function useTypingTest(
 
   const totalTypedCharacters = userInput.length
 
+  /*
+   * Accuracy
+   *
+   * Uses historical errors so that mistakes remain part
+   * of the final performance even if they are corrected.
+   */
+  const accurateCharacters = Math.max(
+    totalTypedCharacters - errorCount,
+    0,
+  )
+
   const accuracy =
     totalTypedCharacters === 0
       ? 100
-      : (correctCharacters / totalTypedCharacters) * 100
+      : (accurateCharacters / totalTypedCharacters) * 100
 
   const elapsedMinutes = elapsedTime / 60
 
+  /*
+   * Raw WPM
+   *
+   * Measures pure typing speed without penalizing mistakes.
+   */
   const rawWpm =
     elapsedMinutes > 0
       ? totalTypedCharacters / 5 / elapsedMinutes
       : 0
 
+  /*
+   * Net WPM
+   *
+   * Measures effective typing speed after accounting
+   * for every mistake made during the test.
+   */
   const netWpm =
     elapsedMinutes > 0
-      ? correctCharacters / 5 / elapsedMinutes
+      ? accurateCharacters / 5 / elapsedMinutes
       : 0
 
   // Timer — only used for Time mode
@@ -127,8 +149,11 @@ function useTypingTest(
       setStatus('running')
     }
 
-    // Only check newly typed characters.
-    // Backspacing does not remove previously recorded mistakes.
+    /*
+     * Only inspect newly typed characters.
+     *
+     * Backspace does not remove a previously recorded error.
+     */
     if (value.length > userInput.length) {
       const typedCharacter = value[value.length - 1]
       const expectedCharacter = text[value.length - 1]
@@ -140,20 +165,19 @@ function useTypingTest(
 
     setUserInput(value)
 
-    // Time mode finishes when the timer reaches zero.
-    // It can also finish early if the passage is completed.
+    // Time mode can finish when the passage is completed.
     if (testMode === 'time' && value === text) {
       finishTest()
       return
     }
 
-    // Words mode finishes when the selected word passage is completed.
+    // Words mode finishes when the passage is completed.
     if (testMode === 'words' && value === text) {
       finishTest()
       return
     }
 
-    // Sentences mode finishes when the sentence/passage is completed.
+    // Sentences mode finishes when the passage is completed.
     if (testMode === 'sentences' && value === text) {
       finishTest()
     }
@@ -181,15 +205,21 @@ function useTypingTest(
     timeLeft,
     status,
     elapsedTime,
-    errorCount,
+
+    // Metrics
     correctCharacters,
     incorrectCharacters,
     totalTypedCharacters,
+    errorCount,
     accuracy,
     rawWpm,
     netWpm,
+
+    // Word metrics
     wordsTyped,
     wordsRemaining,
+
+    // Controls
     handleInput,
     restartTest,
   }

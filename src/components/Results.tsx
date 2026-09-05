@@ -17,64 +17,59 @@ function Results({
 }: ResultsProps) {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col">
-      <div className="mb-12">
+      {/* Heading */}
+      <div className="mb-14">
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--muted)]">
           Test Complete
         </p>
       </div>
 
-      <div className="mb-12 flex items-end gap-16">
+      {/* Main statistics */}
+      <div className="mb-14 flex items-end gap-20">
+        {/* WPM */}
         <div>
-          <div className="text-6xl font-semibold tracking-tight text-[var(--accent)]">
+          <div className="text-7xl font-semibold tracking-tight text-[var(--accent)]">
             {wpm.toFixed(0)}
           </div>
 
-          <div className="mt-2 text-sm text-[var(--muted)]">
-            WPM
-          </div>
+          <div className="mt-2 text-sm text-[var(--muted)]">WPM</div>
         </div>
 
+        {/* Raw WPM */}
         <div>
-          <div className="text-6xl font-semibold tracking-tight text-[var(--text)]">
-            {accuracy.toFixed(1)}%
-          </div>
-
-          <div className="mt-2 text-sm text-[var(--muted)]">
-            Accuracy
-          </div>
-        </div>
-
-        <div>
-          <div className="text-6xl font-semibold tracking-tight text-[var(--text)]">
+          <div className="text-7xl font-semibold tracking-tight text-[var(--text)]">
             {rawWpm.toFixed(0)}
           </div>
 
-          <div className="mt-2 text-sm text-[var(--muted)]">
-            Raw WPM
+          <div className="mt-2 text-sm text-[var(--muted)]">Raw WPM</div>
+        </div>
+
+        {/* Accuracy */}
+        <div>
+          <div className="text-7xl font-semibold tracking-tight text-[var(--text)]">
+            {accuracy.toFixed(1)}%
           </div>
+
+          <div className="mt-2 text-sm text-[var(--muted)]">Accuracy</div>
         </div>
       </div>
 
-      <div className="mb-12 flex gap-8 text-sm">
+      {/* Secondary statistics */}
+      <div className="mb-14 flex gap-10 text-sm">
         <div>
-          <span className="text-[var(--text)]">
-            {correctCharacters}
-          </span>{" "}
-          <span className="text-[var(--muted)]">
-            correct
-          </span>
+          <span className="text-[var(--text)]">{correctCharacters}</span>{" "}
+          <span className="text-[var(--muted)]">correct</span>
         </div>
 
         <div>
-          <span className="text-[var(--error)]">
-            {errorCount}
-          </span>{" "}
+          <span className="text-[var(--error)]">{errorCount}</span>{" "}
           <span className="text-[var(--muted)]">
-            errors
+            {errorCount === 1 ? "error" : "errors"}
           </span>
         </div>
       </div>
 
+      {/* Restart */}
       <button
         onClick={onRestart}
         className="
